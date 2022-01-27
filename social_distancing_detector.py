@@ -1,5 +1,6 @@
 # imports
 from configs import config
+from configs.mailer import Mailer
 from configs.detection import detect_people
 from scipy.spatial import distance as dist 
 import numpy as np
@@ -7,7 +8,19 @@ import argparse
 import imutils
 import cv2
 import os
+import pyttsx3
+import threading
 
+#text to speech converter
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+engine.setProperty('rate', 150)
+engine.setProperty('volume', 1)
+
+def voice_alarm(engine):
+    engine.say("Please observe social distancing")
+    engine.runAndWait()
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--input", type=str, default="", help="path to (optional) input video file")
@@ -93,6 +106,9 @@ while True:
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
         cv2.circle(frame, (cX, cY), 5, color, 1)
 
+    Threshold = "Threshold limit: {}".format(config.Threshold)
+    cv2.putText(frame, Threshold, (470, frame.shape[0] - 50),
+        cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 0, 0), 2)
     # draw the total number of social distancing violations on the output frame
     text = "Social Distancing Violations: {}".format(len(violate))
     cv2.putText(frame, text, (10, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
@@ -104,10 +120,20 @@ while True:
     cv2.circle (frame, (1000, 660), 5, (0,0,255), -1)
 
     pts1 = np.float32([[450, 5], [1160, 5], [5, 390], [1000, 660]])
-    pts2 = np.float32([[0,0], [350,0], [0,650], [350,650]])
+    pts2 = np.float32([[0,20], [350,0], [0,650], [350,650]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     result = cv2.warpPerspective(frame, matrix, (350, 650))
     cv2.imshow("Bird Eye View", result)
+
+    #------------------------------Alert function----------------------------------#
+    if len(violate) >= config.Threshold:
+        cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
+            cv2.FONT_HERSHEY_COMPLEX, 0.60, (0, 0, 255), 2)
+        t = threading.Thread(target=voice_alarm, args=(engine,))
+        t.start()
+        if config.ALERT:
+            Mailer().send(config.MAIL)
+        #config.ALERT = False
 
     # check to see if the output frame should be displayed to the screen
     if args["display"] > 0:
@@ -130,4 +156,13 @@ while True:
     if writer is not None:
         print("[INFO] writing stream to output")
         writer.write(frame)
+
+#Clean up, Free memory
+engine.stop()
+cv2.destroyAllWindows
+
+    
+    
+
+
 
