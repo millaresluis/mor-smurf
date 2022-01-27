@@ -21,5 +21,8 @@
    (top view/bird eye)
    $ https://www.geeksforgeeks.org/perspective-transformation-python-opencv/ 
    $ https://www.youtube.com/watch?v=PtCQH93GucA&t=625s
+
+   (text to speech alarm)
+   $ https://towardsdatascience.com/build-a-motion-triggered-alarm-in-5-minutes-342fbe3d5396
 ```
 

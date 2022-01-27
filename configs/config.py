@@ -6,7 +6,7 @@ MODEL_PATH = "yolo-coco"
 MIN_CONF = 0.3
 NMS_THRESH = 0.3
 #Set the threshold value for total violations limit.
-Threshold = 4
+Threshold = 10
 # email alert
 ALERT = False
 MAIL = 'coolzein76@gmail.com'
@@ -14,5 +14,5 @@ MAIL = 'coolzein76@gmail.com'
 USE_GPU = False
 People_Counter = True
 # define the minimum safe distance (in pixels) that two people can be from each other
-MIN_DISTANCE = 50
+MIN_DISTANCE = 80
 

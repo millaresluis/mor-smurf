@@ -127,8 +127,8 @@ while True:
 
     #------------------------------Alert function----------------------------------#
     if len(violate) >= config.Threshold:
-        # cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
-        #     cv2.FONT_HERSHEY_COMPLEX, 0.60, (0, 0, 255), 2)
+        cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
+            cv2.FONT_HERSHEY_COMPLEX, 0.60, (0, 0, 255), 2)
         t = threading.Thread(target=voice_alarm, args=(engine,))
         t.start()
         if config.ALERT:
