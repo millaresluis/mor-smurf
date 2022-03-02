@@ -21,7 +21,6 @@ def detect_people(frame, net, ln, personIdx=0):
     boxes = []
     centroids = []
     confidences = []
-
     # loop over each of the layer outputs
     for output in layerOutputs:
         # loop over each of the detections
@@ -51,11 +50,13 @@ def detect_people(frame, net, ln, personIdx=0):
                 confidences.append(float(confidence))
 
     # apply non-maxima suppression to suppress weak, overlapping bounding boxes
+    cv2.rectangle(frame, (10, 600), (735,665), (0,0,0), -1)
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, MIN_CONF, NMS_THRESH)
     if People_Counter:
-        human_count = "Human count: {}".format(len(idxs))
-        cv2.putText(frame, human_count, (10, frame.shape[0] - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.70, (0, 0, 255), 2)
-    
+        human_count = "Human Counter: {}".format(len(idxs))
+        cv2.putText(frame, human_count, (550, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+
     # ensure at least one detection exists
     if len(idxs) > 0:
         # loop over the indexes being kept
@@ -63,7 +64,6 @@ def detect_people(frame, net, ln, personIdx=0):
             # extract the bounding box coordinates
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
-
             # update the results list to consist of the person prediction probability, 
             # bounding box coordinates, and the centroid
             r = (confidences[i], (x, y, x + w, y + h), centroids[i])
