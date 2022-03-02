@@ -6,12 +6,17 @@ MODEL_PATH = "yolo-coco"
 MIN_CONF = 0.3
 NMS_THRESH = 0.3
 #Set the threshold value for total violations limit.
-Threshold = 10
+Threshold = 5
+#no. of frames for violation
+frameLimit = 3
+#top down view
+TOP_DOWN = False
 # email alert
 ALERT = False
 MAIL = 'coolzein76@gmail.com'
 # should NVIDIA CUDA GPU be used?
 USE_GPU = False
+# people counter
 People_Counter = True
 # define the minimum safe distance (in pixels) that two people can be from each other
 MIN_DISTANCE = 80
