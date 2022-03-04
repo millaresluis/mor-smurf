@@ -12,6 +12,19 @@ import os
 import pyttsx3
 import threading
 import time
+
+# Create an empty list of points for the coordinates
+list_points = list()
+
+#mouse click callback for top down conversion
+def CallBackFunc(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print("Left button of the mouse is clicked - position (", x, ", ",y, ")")
+        list_points.append([x,y])
+    elif event == cv2.EVENT_RBUTTONDOWN:
+        print("Right button of the mouse is clicked - position (", x, ", ", y, ")")
+        list_points.append([x,y])
+
 #text to speech converter
 stopFrameCheck = False
 def voice_alarm():
@@ -185,6 +198,9 @@ while True:
         # show the output frame
         cv2.imshow("Output", frame)
         key = cv2.waitKey(1) & 0xFF
+
+        # bind the callback function to window
+        cv2.setMouseCallback("Output", CallBackFunc)
 
         # if the 'q' key is pressed, break from the loop
         if key == ord("q"):
