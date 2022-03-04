@@ -10,12 +10,12 @@ Threshold = 5
 #no. of frames for violation
 frameLimit = 3
 #top down view
-TOP_DOWN = False
+TOP_DOWN = True
 # email alert
 ALERT = False
 MAIL = 'coolzein76@gmail.com'
 # should NVIDIA CUDA GPU be used?
-USE_GPU = False
+USE_GPU = True
 # people counter
 People_Counter = True
 # define the minimum safe distance (in pixels) that two people can be from each other
