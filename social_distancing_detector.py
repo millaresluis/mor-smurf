@@ -1,4 +1,5 @@
 # imports
+from calendar import c
 from configs import config
 from configs.mailer import Mailer
 from configs.detection import detect_people
@@ -10,6 +11,19 @@ import cv2
 import os
 import pyttsx3
 import threading
+import time
+
+# Create an empty list of points for the coordinates
+list_points = list()
+
+#mouse click callback for top down conversion
+def CallBackFunc(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print("Left button of the mouse is clicked - position (", x, ", ",y, ")")
+        list_points.append([x,y])
+    elif event == cv2.EVENT_RBUTTONDOWN:
+        print("Right button of the mouse is clicked - position (", x, ", ", y, ")")
+        list_points.append([x,y])
 
 #text to speech converter
 stopFrameCheck = False
@@ -21,15 +35,10 @@ def voice_alarm():
     engine.setProperty('rate', 150)
     engine.setProperty('volume', 1)
     engine.say("Please observe social distancing")
-
-    if(engine.isBusy() == False):
-        stopFrameCheck = True
     engine.runAndWait()
-    # engine.stop()
 
+t = threading.Thread(target=voice_alarm)
 
-    
-        
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--input", type=str, default="", help="path to (optional) input video file")
@@ -41,8 +50,12 @@ args = vars(ap.parse_args())
 labelsPath = os.path.sep.join([config.MODEL_PATH, "coco.names"])
 LABELS = open(labelsPath).read().strip().split("\n")
 
-# derive the paths to the YOLO weights and model configuration
-weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3-tiny.weights"])
+# derive the paths to the YOLO tiny weights and model configuration
+# weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3-tiny.weights"])
+# configPath = os.path.sep.join([config.MODEL_PATH, "yolov3-tiny.cfg"])
+
+# derive the paths to the YOLO tiny weights and model configuration
+weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3.weights"])
 configPath = os.path.sep.join([config.MODEL_PATH, "yolov3.cfg"])
 
 # load the YOLO object detector trained on COCO dataset (80 classes)
@@ -134,19 +147,22 @@ while True:
     text = "Social Distancing Violations: {}".format(len(violate))
     cv2.putText(frame, text, (18, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     #total no of violations
-    totalViolation = "Total Violations: {}".format(violations)
+    totalViolation = "Total Violation Warning: {}".format(violations)
     cv2.putText(frame, totalViolation, (18, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
     
     # bird eye view sample 
     if (config.TOP_DOWN):
-       
-        cv2.circle (frame, (450, 5), 5, (0,0,255), -1)
+        #top left
+        cv2.circle (frame, (690, 5), 5, (0,0,255), -1)
+        #top right
         cv2.circle (frame, (1160, 5), 5, (0,0,255), -1)
+        #bottom left
         cv2.circle (frame, (5, 390), 5, (0,0,255), -1)
+        #bottom right
         cv2.circle (frame, (1000, 660), 5, (0,0,255), -1)
 
-        pts1 = np.float32([[450, 5], [1160, 5], [5, 390], [1000, 660]])
+        pts1 = np.float32([[690, 5], [1160, 5], [5, 390], [1000, 660]])
         pts2 = np.float32([[0,20], [350,0], [0,650], [350,650]])
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
         result = cv2.warpPerspective(frame, matrix, (350, 650))
@@ -155,10 +171,15 @@ while True:
 
     #------------------------------Alert function----------------------------------#
     if len(violate) >= config.Threshold:
-        if (frameCounter >= config.frameLimit):      
+        if (t.is_alive() == True):
+            stopFrameCheck = True
+        else:
             t = threading.Thread(target=voice_alarm)
-            t.start()
-            violations += 1
+            if (frameCounter >= config.frameLimit):      
+                violations += 1
+                t.start()
+            stopFrameCheck = False
+            
 
         previousFrameViolation = format(len(violate))
         # cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
@@ -177,6 +198,9 @@ while True:
         # show the output frame
         cv2.imshow("Output", frame)
         key = cv2.waitKey(1) & 0xFF
+
+        # bind the callback function to window
+        cv2.setMouseCallback("Output", CallBackFunc)
 
         # if the 'q' key is pressed, break from the loop
         if key == ord("q"):
