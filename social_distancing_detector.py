@@ -1,5 +1,7 @@
 # imports
 from calendar import c
+
+from cv2 import log
 from configs import config
 from configs.mailer import Mailer
 from configs.detection import detect_people
@@ -98,7 +100,7 @@ previousFrameViolation = 0
 # loop over the frames from the video stream
 while True:
     # read the next frame from the input video
-    (grabbed, frame) = vs.read()
+    (grabbed, orig_frame) = vs.read()
     # if the frame was not grabbed, then that's the end fo the stream 
     if not grabbed:
         break
@@ -114,11 +116,16 @@ while True:
         frameCounter = 0
  
     # resize the frame and then detect people (only people) in it
-    frame = imutils.resize(frame, width=1200)
+    frame = imutils.resize(orig_frame, width=1200)
+    birdeyeframe= imutils.resize(orig_frame, width=1200)
     results = detect_people(frame, net, ln, personIdx=LABELS.index("person"))
 
     # initialize the set of indexes that violate the minimum social distance
     violate = set()
+
+    #initialize variables for bird eye conversion
+    array_ground_points = list()
+    array_boxes = list()
 
     # ensure there are at least two people detections (required in order to compute the
     # the pairwise distance maps)
@@ -143,6 +150,8 @@ while True:
         # extract teh bounding box and centroid coordinates, then initialize the color of the annotation
         (startX, startY, endX, endY) = bbox
         (cX, cY) = centroid
+        array_ground_points.append((cX, endY))
+        array_boxes.append((startX,startY,endX,endY))
         color = (0, 255, 0)
 
         # if the index pair exists within the violation set, then update the color
@@ -152,6 +161,11 @@ while True:
         # draw (1) a bounding box around the person and (2) the centroid coordinates of the person
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
         cv2.circle(frame, (cX, cY), 5, color, 1)
+        cv2.line(frame, (690, 5), (1160, 5), (225,0,0), 1)
+        cv2.line(frame, (690, 5), (5, 390), (225,0,0), 1)
+        cv2.line(frame, (1160, 5), (1000, 660), (225,0,0), 1)
+        cv2.line(frame, (5, 390), (1000, 660), (225,0,0), 1)
+        # cv2.circle(frame, (cX, endY), 8, color, 1)
 
     
     # cv2.imshow("qweqwe", centroid)
@@ -165,7 +179,7 @@ while True:
     totalViolation = "Total Violation Warning: {}".format(violations)
     cv2.putText(frame, totalViolation, (18, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
-    
+    #------------------------------Bird eye----------------------------------------#
     # bird eye view sample 
     if (config.TOP_DOWN):
         #top left
@@ -175,12 +189,28 @@ while True:
         #bottom left
         cv2.circle (frame, (5, 390), 5, (0,0,255), -1)
         #bottom right
-        cv2.circle (frame, (1000, 660), 5, (0,0,255), -1)
+        cv2.circle (frame, (1000, 660), 5, (0,0,255), -1)   
+        width = 350
+        height = 650
 
         pts1 = np.float32([[690, 5], [1160, 5], [5, 390], [1000, 660]])
-        pts2 = np.float32([[0,20], [350,0], [0,650], [350,650]])
+        pts2 = np.float32([[0,0], [width,0], [0,height], [width,height]])
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
-        result = cv2.warpPerspective(frame, matrix, (350, 650))
+        blank_image = np.zeros((height,width,3), np.uint8)
+        result = cv2.warpPerspective(birdeyeframe, matrix, (width, height))
+        list_points_to_detect = np.float32(array_ground_points).reshape(-1, 1, 2)
+        transformed_points = cv2.perspectiveTransform(list_points_to_detect, matrix)
+        transformed_points_list = list()
+        for i in range(0,transformed_points.shape[0]):
+            transformed_points_list.append([transformed_points[i][0][0],transformed_points[i][0][1]])
+        for point in transformed_points_list:
+            x,y = point
+            BIG_CIRCLE = 40  
+            SMALL_CIRCLE = 3
+            COLOR_GREEN = (0, 255, 0)
+            cv2.circle(result, (int(x),int(y)), BIG_CIRCLE, COLOR_GREEN, 2)
+            cv2.circle(result, (int(x),int(y)), SMALL_CIRCLE, COLOR_GREEN, -1)
+            
         cv2.imshow("Bird Eye View", result)
     
 
