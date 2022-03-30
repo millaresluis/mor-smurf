@@ -4,6 +4,7 @@ from configs import config
 from configs.mailer import Mailer
 from configs.detection import detect_people
 from scipy.spatial import distance as dist 
+from twilio.rest import Client 
 import numpy as np
 import argparse
 import imutils
@@ -15,6 +16,20 @@ import time
 
 # Create an empty list of points for the coordinates
 list_points = list()
+
+def sms_email_notification():
+    # Mailer().send(config.MAIL)
+    account_sid = 'AC67d82c2b1cf7ae7ddd8bd3e5a2096fd6' 
+    auth_token = 'b138eabbee8359096b2376f161147023' 
+    client = Client(account_sid, auth_token) 
+    message = client.messages.create(  
+                                messaging_service_sid='MG6cf9a8edf7c73ae932b2e6ac7ba1eab5', 
+                                body='Multiple violators have been identified',      
+                                to='+639162367611' 
+                            ) 
+    
+    print(message.sid)
+
 
 #mouse click callback for top down conversion
 def CallBackFunc(event, x, y, flags, param):
@@ -175,9 +190,12 @@ while True:
             stopFrameCheck = True
         else:
             t = threading.Thread(target=voice_alarm)
-            if (frameCounter >= config.frameLimit):      
-                violations += 1
-                t.start()
+            t2 = threading.Thread(target=sms_email_notification)
+            if config.ALERT:
+                if (frameCounter >= config.frameLimit):      
+                    violations += 1
+                    t.start()     
+                    t2.start()
             stopFrameCheck = False
             
 
@@ -185,8 +203,8 @@ while True:
         # cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
         #     cv2.FONT_HERSHEY_COMPLEX, 0.60, (0, 0, 255), 2)
         
-        if config.ALERT:
-            Mailer().send(config.MAIL)
+        
+           
 
     else:
         previousFrameViolation = 0
@@ -220,6 +238,9 @@ while True:
     if writer is not None:
         # print("[INFO] writing stream to output")
         writer.write(frame)
+
+
+
 
 #Clean up, Free memory
 cv2.destroyAllWindows

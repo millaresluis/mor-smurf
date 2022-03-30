@@ -6,13 +6,13 @@ MODEL_PATH = "yolo-coco"
 MIN_CONF = 0.3
 NMS_THRESH = 0.3
 #Set the threshold value for total violations limit.
-Threshold = 5
+Threshold = 15
 #no. of frames for violation
 frameLimit = 3
 #top down view
 TOP_DOWN = True
 # email alert
-ALERT = False
+ALERT = True
 MAIL = 'coolzein76@gmail.com'
 # should NVIDIA CUDA GPU be used?
 USE_GPU = True
