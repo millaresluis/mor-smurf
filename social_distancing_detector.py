@@ -16,8 +16,13 @@ import pyttsx3
 import threading
 import time
 
-# Create an empty list of points for the coordinates
-list_points = list()
+# Create an empty list of points for the coordinates for mouse callback
+list_points = list(([690, 5], [1160, 5], [5, 390], [1000, 660]))
+TopLeft_calibrate = False
+TopRight_calibrate = False
+BottomLeft_calibrate = False
+BottomRight_calibrate = False
+Calibrate_checker = False
 
 def sms_email_notification():
     # Mailer().send(config.MAIL)
@@ -37,10 +42,23 @@ def sms_email_notification():
 def CallBackFunc(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         print("Left button of the mouse is clicked - position (", x, ", ",y, ")")
-        list_points.append([x,y])
-    elif event == cv2.EVENT_RBUTTONDOWN:
-        print("Right button of the mouse is clicked - position (", x, ", ", y, ")")
-        list_points.append([x,y])
+        global TopLeft_calibrate, TopRight_calibrate, BottomLeft_calibrate, BottomRight_calibrate, Calibrate_checker, list_points
+        if TopLeft_calibrate == True:
+            list_points[0] = [x,y]
+            TopLeft_calibrate = False
+            Calibrate_checker = False
+        if TopRight_calibrate == True:
+            list_points[1] = [x,y]
+            TopRight_calibrate = False
+            Calibrate_checker = False
+        if BottomLeft_calibrate == True:
+            list_points[2] = [x,y]
+            BottomLeft_calibrate = False
+            Calibrate_checker = False
+        if BottomRight_calibrate == True:
+            list_points[3] = [x,y]
+            BottomRight_calibrate = False
+            Calibrate_checker = False
 
 #text to speech converter
 stopFrameCheck = False
@@ -161,10 +179,10 @@ while True:
         # draw (1) a bounding box around the person and (2) the centroid coordinates of the person
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
         cv2.circle(frame, (cX, cY), 5, color, 1)
-        cv2.line(frame, (690, 5), (1160, 5), (225,0,0), 1)
-        cv2.line(frame, (690, 5), (5, 390), (225,0,0), 1)
-        cv2.line(frame, (1160, 5), (1000, 660), (225,0,0), 1)
-        cv2.line(frame, (5, 390), (1000, 660), (225,0,0), 1)
+        cv2.line(frame, list_points[0], list_points[1], (225,0,0), 1)
+        cv2.line(frame, list_points[0], list_points[2], (225,0,0), 1)
+        cv2.line(frame, list_points[1], list_points[3], (225,0,0), 1)
+        cv2.line(frame, list_points[2], list_points[3], (225,0,0), 1)
         # cv2.circle(frame, (cX, endY), 8, color, 1)
 
     
@@ -183,17 +201,29 @@ while True:
     # bird eye view sample 
     if (config.TOP_DOWN):
         #top left
-        cv2.circle (frame, (690, 5), 5, (0,0,255), -1)
+        if (TopLeft_calibrate == True):
+            cv2.circle (frame, list_points[0], 5, (0,255,0), -1)
+        else:
+            cv2.circle (frame, list_points[0], 5, (0,0,255), -1)
         #top right
-        cv2.circle (frame, (1160, 5), 5, (0,0,255), -1)
+        if (TopRight_calibrate == True):
+            cv2.circle (frame, list_points[1], 5, (0,255,0), -1)
+        else:
+            cv2.circle (frame, list_points[1], 5, (0,0,255), -1)
         #bottom left
-        cv2.circle (frame, (5, 390), 5, (0,0,255), -1)
+        if (BottomLeft_calibrate == True):
+            cv2.circle (frame, list_points[2], 5, (0,255,0), -1)
+        else:
+            cv2.circle (frame, list_points[2], 5, (0,0,255), -1)
         #bottom right
-        cv2.circle (frame, (1000, 660), 5, (0,0,255), -1)   
+        if (BottomRight_calibrate == True):
+            cv2.circle (frame, list_points[3], 5, (0,255,0), -1)
+        else:
+            cv2.circle (frame, list_points[3], 5, (0,0,255), -1)
         width = 350
         height = 650
 
-        pts1 = np.float32([[690, 5], [1160, 5], [5, 390], [1000, 660]])
+        pts1 = np.float32([list_points[0], list_points[1], list_points[2], list_points[3]])
         pts2 = np.float32([[0,0], [width,0], [0,height], [width,height]])
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
         blank_image = np.zeros((height,width,3), np.uint8)
@@ -253,6 +283,39 @@ while True:
         # if the 'q' key is pressed, break from the loop
         if key == ord("q"):
             break
+
+        if key == ord("1"):
+            if TopLeft_calibrate == False and Calibrate_checker == False:
+                TopLeft_calibrate = True
+                Calibrate_checker = True
+            elif TopLeft_calibrate == True and Calibrate_checker == True:
+                TopLeft_calibrate = False
+                Calibrate_checker = False
+                
+        if key == ord("2"):
+            if TopRight_calibrate == False and Calibrate_checker == False:
+                TopRight_calibrate = True
+                Calibrate_checker = True
+            elif TopRight_calibrate == True and Calibrate_checker == True:
+                TopRight_calibrate = False 
+                Calibrate_checker = False
+
+        if key == ord("3"):
+            if BottomLeft_calibrate == False and Calibrate_checker == False:
+                BottomLeft_calibrate = True
+                Calibrate_checker = True
+            elif BottomLeft_calibrate == True and Calibrate_checker == True:
+                BottomLeft_calibrate = False
+                Calibrate_checker = False
+
+        if key == ord("4"):
+            if BottomRight_calibrate == False and Calibrate_checker == False:
+                BottomRight_calibrate = True
+                Calibrate_checker = True
+            elif BottomRight_calibrate == True and Calibrate_checker == True:
+                BottomRight_calibrate = False
+                Calibrate_checker = False
+
         # if p is pressed, pause
         if key == ord('p'):
             cv2.waitKey(-1) #wait until any key is pressed
