@@ -9,7 +9,13 @@
    $ python social_distancing_detector.py --input pedestrians.mp4 --output output.avi --display 1 (if you will test the app using a vid)
    $ python social_distancing_detector.py --output output.avi --display 1 (if you will test the app using a webcam/cctv)
 ```
+## Controls
 
+```bash
+   (exit = q)
+   (pause = p)
+   (adjust top down points = 1-4)
+```
 
 ## References
 
