@@ -15,9 +15,18 @@ import os
 import pyttsx3
 import threading
 import time
+import json
 
-# Create an empty list of points for the coordinates for mouse callback
-list_points = list(([690, 5], [1160, 5], [5, 390], [1000, 660]))
+# Initial list of points for top down view
+f = open('test-config.json','r')
+TopdownPointConfig = json.loads(f.read())
+list_points = list((
+    TopdownPointConfig['TopLeft'],
+    TopdownPointConfig['TopRight'],
+    TopdownPointConfig['BottomLeft'],
+    TopdownPointConfig['BottomRight']
+))
+f.close()
 TopLeft_calibrate = False
 TopRight_calibrate = False
 BottomLeft_calibrate = False
@@ -45,18 +54,34 @@ def CallBackFunc(event, x, y, flags, param):
         global TopLeft_calibrate, TopRight_calibrate, BottomLeft_calibrate, BottomRight_calibrate, Calibrate_checker, list_points
         if TopLeft_calibrate == True:
             list_points[0] = [x,y]
+            TopdownPointConfig["TopLeft"] = [x,y]
+            f = open("test-config.json", "w")
+            json.dump(TopdownPointConfig, f)
+            f.close()
             TopLeft_calibrate = False
             Calibrate_checker = False
         if TopRight_calibrate == True:
             list_points[1] = [x,y]
+            TopdownPointConfig["TopRight"] = [x,y]
+            f = open("test-config.json", "w")
+            json.dump(TopdownPointConfig, f)
+            f.close()
             TopRight_calibrate = False
             Calibrate_checker = False
         if BottomLeft_calibrate == True:
             list_points[2] = [x,y]
+            TopdownPointConfig["BottomLeft"] = [x,y]
+            f = open("test-config.json", "w")
+            json.dump(TopdownPointConfig, f)
+            f.close()
             BottomLeft_calibrate = False
             Calibrate_checker = False
         if BottomRight_calibrate == True:
             list_points[3] = [x,y]
+            TopdownPointConfig["BottomRight"] = [x,y]
+            f = open("test-config.json", "w")
+            json.dump(TopdownPointConfig, f)
+            f.close()
             BottomRight_calibrate = False
             Calibrate_checker = False
 
@@ -183,8 +208,6 @@ while True:
         cv2.line(frame, list_points[0], list_points[2], (225,0,0), 1)
         cv2.line(frame, list_points[1], list_points[3], (225,0,0), 1)
         cv2.line(frame, list_points[2], list_points[3], (225,0,0), 1)
-        # cv2.circle(frame, (cX, endY), 8, color, 1)
-
     
     # cv2.imshow("qweqwe", centroid)
     Threshold = "Threshold limit: {}".format(config.Threshold)
@@ -237,9 +260,11 @@ while True:
             x,y = point
             BIG_CIRCLE = 40  
             SMALL_CIRCLE = 3
-            COLOR_GREEN = (0, 255, 0)
-            cv2.circle(result, (int(x),int(y)), BIG_CIRCLE, COLOR_GREEN, 2)
-            cv2.circle(result, (int(x),int(y)), SMALL_CIRCLE, COLOR_GREEN, -1)
+            COLOR = (0, 255, 0)
+            if transformed_points_list.index(point) in violate:
+                COLOR = (0,0,255)
+            cv2.circle(result, (int(x),int(y)), BIG_CIRCLE, COLOR, 2)
+            cv2.circle(result, (int(x),int(y)), SMALL_CIRCLE, COLOR, -1)
             
         cv2.imshow("Bird Eye View", result)
     
