@@ -6,7 +6,7 @@ MODEL_PATH = "yolo-coco"
 MIN_CONF = 0.3
 NMS_THRESH = 0.3
 #Set the threshold value for total violations limit.
-Threshold = 2
+Threshold = 15
 #no. of frames for violation
 frameLimit = 3
 #top down view
@@ -20,4 +20,6 @@ USE_GPU = True
 People_Counter = True
 # define the minimum safe distance (in pixels) that two people can be from each other
 MIN_DISTANCE = 80
+#human data
+Human_Data = 0
 

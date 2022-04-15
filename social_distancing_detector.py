@@ -1,9 +1,6 @@
 # imports
 from calendar import c
-from multiprocessing import dummy
-
 from cv2 import log
-from scipy import rand
 from configs import config
 from configs.mailer import Mailer
 from configs.detection import detect_people
@@ -18,15 +15,17 @@ import pyttsx3
 import threading
 import time
 import json
-from datetime import date
-import random
-
-today = date.today()
+import csv
+import pandas as pd
 
 #analytics
-date = today.strftime("%d/%m/%Y")
-violations = 0
-dummyData = random.randint(0,50)
+x_value = 0
+totalViolations = 0
+realtimeFields = ["x_value", "config.Human_Data", "detectedViolators", "totalViolations" ]
+
+with open('realtimeData.csv', 'w') as csv_file:
+    csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
+    csv_writer.writeheader()
 
 # Initial list of points for top down view
 f = open('test-config.json','r')
@@ -45,7 +44,7 @@ BottomRight_calibrate = False
 Calibrate_checker = False
 
 def sms_email_notification():
-    # Mailer().send(config.MAIL)
+    Mailer().send(config.MAIL)
     account_sid = 'AC67d82c2b1cf7ae7ddd8bd3e5a2096fd6' 
     auth_token = 'b138eabbee8359096b2376f161147023' 
     client = Client(account_sid, auth_token) 
@@ -152,6 +151,7 @@ writer = None
 previousFrameViolation = 0
 # loop over the frames from the video stream
 while True:
+    # num += 1
     # read the next frame from the input video
     (grabbed, orig_frame) = vs.read()
     # if the frame was not grabbed, then that's the end fo the stream 
@@ -219,16 +219,23 @@ while True:
         cv2.line(frame, list_points[1], list_points[3], (225,0,0), 1)
         cv2.line(frame, list_points[2], list_points[3], (225,0,0), 1)
     
-    # cv2.imshow("qweqwe", centroid)
+    #threshold value
     Threshold = "Threshold limit: {}".format(config.Threshold)
     cv2.putText(frame, Threshold, (350, frame.shape[0] - 50),
         cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2)
+
     # draw the total number of social distancing violations on the output frame
     text = "Social Distancing Violations: {}".format(len(violate))
+    detectedViolators = format(len(violate))
     cv2.putText(frame, text, (18, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
     #total no of violations
-    totalViolation = "Total Violation Warning: {}".format(violations)
+    totalViolation = "Total Violation Warning: {}".format(totalViolations)
     cv2.putText(frame, totalViolation, (18, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+    #frame counter
+    frameText = "Frame Counter: {}".format(frameCounter)
+    cv2.putText(frame, frameText, (350, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
     #------------------------------Bird eye----------------------------------------#
     # bird eye view sample 
@@ -288,7 +295,7 @@ while True:
             #t2 = threading.Thread(target=sms_email_notification)
             if config.ALERT:
                 if (frameCounter >= config.frameLimit):      
-                    violations += 1
+                    totalViolations += 1
                     t.start()     
                     #t2.start()
             stopFrameCheck = False
@@ -297,15 +304,10 @@ while True:
         previousFrameViolation = format(len(violate))
         # cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
         #     cv2.FONT_HERSHEY_COMPLEX, 0.60, (0, 0, 255), 2)
-        
-        
-           
 
     else:
         previousFrameViolation = 0
         
-    text1 = "Frame Counter: {}".format(frameCounter)
-    cv2.putText(frame, text1, (350, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     # check to see if the output frame should be displayed to the screen
     if args["display"] > 0:
         # show the output frame
@@ -367,11 +369,23 @@ while True:
         # print("[INFO] writing stream to output")
         writer.write(frame)
 
-f = open("data.txt", "a")
-violations = repr(violations)
-dummyData = repr(dummyData)
-f.write(date + " " + violations + " " + dummyData + "\n")
-f.close()
+    with open('realtimeData.csv', 'a') as csv_file:
+        csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
+
+        info = {
+            "x_value": x_value,
+            "config.Human_Data": config.Human_Data,
+            "detectedViolators": detectedViolators,
+            "totalViolations": totalViolations,
+        }
+
+        csv_writer.writerow(info)
+        print(x_value, config.Human_Data, detectedViolators, totalViolations)
+
+        x_value += 1
+        config.Human_Data = config.Human_Data
+        detectedViolators = detectedViolators
+        totalViolations = totalViolations
 
 #Clean up, Free memory
 cv2.destroyAllWindows
