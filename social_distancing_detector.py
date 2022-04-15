@@ -1,7 +1,9 @@
 # imports
 from calendar import c
+from multiprocessing import dummy
 
 from cv2 import log
+from scipy import rand
 from configs import config
 from configs.mailer import Mailer
 from configs.detection import detect_people
@@ -16,6 +18,15 @@ import pyttsx3
 import threading
 import time
 import json
+from datetime import date
+import random
+
+today = date.today()
+
+#analytics
+date = today.strftime("%d/%m/%Y")
+violations = 0
+dummyData = random.randint(0,50)
 
 # Initial list of points for top down view
 f = open('test-config.json','r')
@@ -138,7 +149,6 @@ print("[INFO] accessing video stream...")
 # open input video if available else webcam stream
 vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
 writer = None
-violations = 0
 previousFrameViolation = 0
 # loop over the frames from the video stream
 while True:
@@ -275,12 +285,12 @@ while True:
             stopFrameCheck = True
         else:
             t = threading.Thread(target=voice_alarm)
-            t2 = threading.Thread(target=sms_email_notification)
+            #t2 = threading.Thread(target=sms_email_notification)
             if config.ALERT:
                 if (frameCounter >= config.frameLimit):      
                     violations += 1
                     t.start()     
-                    t2.start()
+                    #t2.start()
             stopFrameCheck = False
             
 
@@ -357,8 +367,11 @@ while True:
         # print("[INFO] writing stream to output")
         writer.write(frame)
 
-
-
+f = open("data.txt", "a")
+violations = repr(violations)
+dummyData = repr(dummyData)
+f.write(date + " " + violations + " " + dummyData + "\n")
+f.close()
 
 #Clean up, Free memory
 cv2.destroyAllWindows
