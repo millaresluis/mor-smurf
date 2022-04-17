@@ -1,10 +1,9 @@
-import random
 from itertools import count
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-plt.style.use('fivethirtyeight')
+plt.style.use('seaborn')
 
 x_vals = []
 y_vals = []
@@ -26,8 +25,8 @@ def animate(i):
     plt.plot(x, y3, label='Violations')
     
 
-    plt.legend(loc='upper left')
-    plt.title('Data Visualization')
+    plt.legend(loc='upper left', prop={'size': 12})
+    plt.title('Realtime Data Visualization')
     plt.tight_layout()
 
 
