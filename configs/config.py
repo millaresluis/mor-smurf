@@ -13,13 +13,13 @@ frameLimit = 3
 TOP_DOWN = True
 # email alert
 ALERT = True
-MAIL = 'coolzein76@gmail.com'
+MAIL = 'email'
 # should NVIDIA CUDA GPU be used?
 USE_GPU = True
 # people counter
 People_Counter = True
 # define the minimum safe distance (in pixels) that two people can be from each other
 MIN_DISTANCE = 80
-#human data
+# analytics
 Human_Data = 0
-
+ATTACH = False

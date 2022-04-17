@@ -373,6 +373,7 @@ while True:
         # print("[INFO] writing stream to output")
         writer.write(frame)
 
+    #Records Realtime Data
     with open('realtimeData.csv', 'a') as csv_file:
         csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
 
@@ -389,27 +390,32 @@ while True:
         detectedViolators = detectedViolators
         totalViolations = totalViolations
 
+
 # Records Average Data after the loop
-df= pd.read_csv ('realtimeData.csv')
-#get average per column
-averagePerson = round(df['config.Human_Data'].mean(), 0)
-averageViolator = round(df['detectedViolators'].mean(), 0)
-averageViolation = round(df['totalViolations'].mean(), 0)
+if config.ATTACH:
+    df= pd.read_csv ('realtimeData.csv')
+    #get average per column
+    averagePerson = round(df['config.Human_Data'].mean(), 0)
+    averageViolator = round(df['detectedViolators'].mean(), 0)
+    averageViolation = round(df['totalViolations'].mean(), 0)
 
-with open('recordedData.csv', 'a') as csv_file:
-    csv_writer = csv.DictWriter(csv_file, fieldnames=recordedFields)
-    info = {
-            "date": date,
-            "averagePerson": averagePerson,
-            "averageViolator": averageViolator,
-            "averageViolation": averageViolation,
-        }
-    csv_writer.writerow(info)
+    with open('recordedData.csv', 'a') as csv_file:
+        csv_writer = csv.DictWriter(csv_file, fieldnames=recordedFields)
+        info = {
+                "date": date,
+                "averagePerson": averagePerson,
+                "averageViolator": averageViolator,
+                "averageViolation": averageViolation,
+            }
+        csv_writer.writerow(info)
 
-    date = date
-    averagePerson = averagePerson
-    averageViolator = averageViolator
-    averageViolation = averageViolation
+        date = date
+        averagePerson = averagePerson
+        averageViolator = averageViolator
+        averageViolation = averageViolation
+
+    # Send recorded data through email
+    Mailer().sendData(config.MAIL)
 
 #Clean up, Free memory
 cv2.destroyAllWindows
