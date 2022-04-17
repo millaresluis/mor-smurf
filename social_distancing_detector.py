@@ -17,11 +17,15 @@ import time
 import json
 import csv
 import pandas as pd
+from datetime import date
 
 #analytics
+today = date.today()
+date = today.strftime("%Y-%m-%d")
 x_value = 0
 totalViolations = 0
 realtimeFields = ["x_value", "config.Human_Data", "detectedViolators", "totalViolations" ]
+recordedFields = ["date", "averagePerson", "averageViolator", "averageViolation" ]
 
 with open('realtimeData.csv', 'w') as csv_file:
     csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
@@ -292,12 +296,12 @@ while True:
             stopFrameCheck = True
         else:
             t = threading.Thread(target=voice_alarm)
-            #t2 = threading.Thread(target=sms_email_notification)
+            t2 = threading.Thread(target=sms_email_notification)
             if config.ALERT:
                 if (frameCounter >= config.frameLimit):      
                     totalViolations += 1
                     t.start()     
-                    #t2.start()
+                    t2.start()
             stopFrameCheck = False
             
 
@@ -378,14 +382,34 @@ while True:
             "detectedViolators": detectedViolators,
             "totalViolations": totalViolations,
         }
-
         csv_writer.writerow(info)
-        print(x_value, config.Human_Data, detectedViolators, totalViolations)
 
         x_value += 1
         config.Human_Data = config.Human_Data
         detectedViolators = detectedViolators
         totalViolations = totalViolations
+
+# Records Average Data after the loop
+df= pd.read_csv ('realtimeData.csv')
+#get average per column
+averagePerson = round(df['config.Human_Data'].mean(), 0)
+averageViolator = round(df['detectedViolators'].mean(), 0)
+averageViolation = round(df['totalViolations'].mean(), 0)
+
+with open('recordedData.csv', 'a') as csv_file:
+    csv_writer = csv.DictWriter(csv_file, fieldnames=recordedFields)
+    info = {
+            "date": date,
+            "averagePerson": averagePerson,
+            "averageViolator": averageViolator,
+            "averageViolation": averageViolation,
+        }
+    csv_writer.writerow(info)
+
+    date = date
+    averagePerson = averagePerson
+    averageViolator = averageViolator
+    averageViolation = averageViolation
 
 #Clean up, Free memory
 cv2.destroyAllWindows
