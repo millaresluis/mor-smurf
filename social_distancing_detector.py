@@ -126,8 +126,8 @@ LABELS = open(labelsPath).read().strip().split("\n")
 # configPath = os.path.sep.join([config.MODEL_PATH, "yolov3-tiny.cfg"])
 
 # derive the paths to the YOLO tiny weights and model configuration
-weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3.weights"])
-configPath = os.path.sep.join([config.MODEL_PATH, "yolov3.cfg"])
+weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov4.weights"])
+configPath = os.path.sep.join([config.MODEL_PATH, "yolov4.cfg"])
 
 # load the YOLO object detector trained on COCO dataset (80 classes)
 print("[INFO] loading YOLO from disk...")
@@ -175,6 +175,7 @@ while True:
 
     # initialize the set of indexes that violate the minimum social distance
     violate = set()
+    TopDownViolate = set()
 
     #initialize variables for bird eye conversion
     array_ground_points = list()
@@ -264,18 +265,36 @@ while True:
         list_points_to_detect = np.float32(array_ground_points).reshape(-1, 1, 2)
         transformed_points = cv2.perspectiveTransform(list_points_to_detect, matrix)
         transformed_points_list = list()
-        for i in range(0,transformed_points.shape[0]):
-            transformed_points_list.append([transformed_points[i][0][0],transformed_points[i][0][1]])
+        
+        if(len(results) >= 2):
+            for i in range(0,transformed_points.shape[0]):
+                transformed_points_list.append([int(transformed_points[i][0][0]),int(transformed_points[i][0][1])])
+        
+        #separate distance calculator for top-down view
+        if(len(results) >= 2):
+            TopDownCentroids = np.array([point for point in transformed_points_list])
+            TopDownD = dist.cdist(TopDownCentroids, TopDownCentroids, metric="euclidean")
+
+            # loop over the upper triangular of the distance matrix
+            for i in range(0, TopDownD.shape[0]):
+                for j in range(i+1, TopDownD.shape[1]):
+                    # check to see if the distance between any two centroid pairs is less
+                    # than the configured number of pixels
+                    if TopDownD[i, j] < config.MIN_DISTANCE:
+                        # update the violation set with the indexes of the centroid pairs
+                        TopDownViolate.add(i)
+                        TopDownViolate.add(j)
+
         for point in transformed_points_list:
             x,y = point
             BIG_CIRCLE = 40  
             SMALL_CIRCLE = 3
             COLOR = (0, 255, 0)
-            if transformed_points_list.index(point) in violate:
+            if transformed_points_list.index(point) in TopDownViolate:
                 COLOR = (0,0,255)
             cv2.circle(result, (int(x),int(y)), BIG_CIRCLE, COLOR, 2)
             cv2.circle(result, (int(x),int(y)), SMALL_CIRCLE, COLOR, -1)
-            
+
         cv2.imshow("Bird Eye View", result)
     
 
