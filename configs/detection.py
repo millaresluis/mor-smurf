@@ -1,6 +1,7 @@
 # imports
 from .config import NMS_THRESH
 from .config import MIN_CONF, People_Counter
+from configs import config
 import numpy as np
 import cv2
 
@@ -9,7 +10,7 @@ def detect_people(frame, net, ln, personIdx=0):
     # grab dimensions of the frame and initialize the list of results
     (H, W) = frame.shape[:2]
     results = []
-
+    
     # construct a blob from the input frame and then perfrom a forward pass
     # of the YOLO object detector, giving us the bounding boxes and
     # associated probabilities
@@ -50,13 +51,13 @@ def detect_people(frame, net, ln, personIdx=0):
                 confidences.append(float(confidence))
 
     # apply non-maxima suppression to suppress weak, overlapping bounding boxes
-    cv2.rectangle(frame, (10, 600), (735,665), (0,0,0), -1)
+    # cv2.rectangle(frame, (10, 600), (735,665), (0,0,0), -1)
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, MIN_CONF, NMS_THRESH)
     if People_Counter:
         human_count = "Human Counter: {}".format(len(idxs))
         cv2.putText(frame, human_count, (550, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-
+    config.Human_Data = format(len(idxs))
     # ensure at least one detection exists
     if len(idxs) > 0:
         # loop over the indexes being kept
