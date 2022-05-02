@@ -12,7 +12,7 @@ index = count()
 
 
 def animate(i):
-    data = pd.read_csv('../realtimeData.csv')
+    data = pd.read_csv('realtimeData.csv')
     x = data['x_value']
     y1 = data['config.Human_Data']
     y2 = data['detectedViolators']
