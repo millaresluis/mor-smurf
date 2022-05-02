@@ -1,4 +1,7 @@
 # base path to YOLO directory
+from sqlalchemy import false
+
+
 MODEL_PATH = "yolo-coco"
 
 # initialize minimum probability to filter weak detections along with the
@@ -12,14 +15,14 @@ frameLimit = 3
 #top down view
 TOP_DOWN = True
 # email alert
-ALERT = True
+ALERT = False
 MAIL = 'lulumopanot@gmail.com'
 # should NVIDIA CUDA GPU be used?
 USE_GPU = True
 # people counter
 People_Counter = True
 # define the minimum safe distance (in pixels) that two people can be from each other
-MIN_DISTANCE = 80
+MIN_DISTANCE = 200
 # analytics
 Human_Data = 0
 ATTACH = True

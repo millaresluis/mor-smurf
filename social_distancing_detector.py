@@ -1,10 +1,10 @@
 # imports
 from cv2 import log
 from configs import config
-from configs.mailer import Mailer
 from configs.detection import detect_people
+from configs.smsnotif import sms_email_notification
+from configs.mailer import Mailer
 from scipy.spatial import distance as dist 
-from twilio.rest import Client 
 from analytics.recorded import recorded_plot
 import numpy as np
 import argparse
@@ -18,7 +18,8 @@ import json
 import csv
 import pandas as pd
 from datetime import date
-
+from subprocess import Popen
+Popen('python analytics/realtime.py')
 #analytics
 today = date.today()
 date = today.strftime("%Y-%m-%d")
@@ -46,20 +47,6 @@ TopRight_calibrate = False
 BottomLeft_calibrate = False
 BottomRight_calibrate = False
 Calibrate_checker = False
-
-def sms_email_notification():
-    Mailer().send(config.MAIL)
-    account_sid = 'AC67d82c2b1cf7ae7ddd8bd3e5a2096fd6' 
-    auth_token = 'b138eabbee8359096b2376f161147023' 
-    client = Client(account_sid, auth_token) 
-    message = client.messages.create(  
-                                messaging_service_sid='MG6cf9a8edf7c73ae932b2e6ac7ba1eab5', 
-                                body='Multiple violators have been identified',      
-                                to='+639162367611' 
-                            ) 
-    
-    print(message.sid)
-
 
 #mouse click callback for top down conversion
 def CallBackFunc(event, x, y, flags, param):
@@ -99,6 +86,7 @@ def CallBackFunc(event, x, y, flags, param):
             BottomRight_calibrate = False
             Calibrate_checker = False
 
+
 #text to speech converter
 stopFrameCheck = False
 def voice_alarm():
@@ -125,12 +113,8 @@ labelsPath = os.path.sep.join([config.MODEL_PATH, "coco.names"])
 LABELS = open(labelsPath).read().strip().split("\n")
 
 # derive the paths to the YOLO tiny weights and model configuration
-# weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3-tiny.weights"])
-# configPath = os.path.sep.join([config.MODEL_PATH, "yolov3-tiny.cfg"])
-
-# derive the paths to the YOLO tiny weights and model configuration
-weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov3.weights"])
-configPath = os.path.sep.join([config.MODEL_PATH, "yolov3.cfg"])
+weightsPath = os.path.sep.join([config.MODEL_PATH, "yolov4.weights"])
+configPath = os.path.sep.join([config.MODEL_PATH, "yolov4.cfg"])
 
 # load the YOLO object detector trained on COCO dataset (80 classes)
 print("[INFO] loading YOLO from disk...")
@@ -154,7 +138,7 @@ vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
 writer = None
 previousFrameViolation = 0
 # loop over the frames from the video stream
-while True:
+while True:    
     # num += 1
     # read the next frame from the input video
     (grabbed, orig_frame) = vs.read()
@@ -179,6 +163,7 @@ while True:
 
     # initialize the set of indexes that violate the minimum social distance
     violate = set()
+    TopDownViolate = set()
 
     #initialize variables for bird eye conversion
     array_ground_points = list()
@@ -241,7 +226,11 @@ while True:
     frameText = "Frame Counter: {}".format(frameCounter)
     cv2.putText(frame, frameText, (350, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
-    #------------------------------Bird eye----------------------------------------#
+    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
+    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
+    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
+    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
+    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
     # bird eye view sample 
     if (config.TOP_DOWN):
         #top left
@@ -275,21 +264,42 @@ while True:
         list_points_to_detect = np.float32(array_ground_points).reshape(-1, 1, 2)
         transformed_points = cv2.perspectiveTransform(list_points_to_detect, matrix)
         transformed_points_list = list()
-        for i in range(0,transformed_points.shape[0]):
-            transformed_points_list.append([transformed_points[i][0][0],transformed_points[i][0][1]])
+        
+        if(len(results) >= 2):
+            for i in range(0,transformed_points.shape[0]):
+                transformed_points_list.append([int(transformed_points[i][0][0]),int(transformed_points[i][0][1])])
+        
+        #separate distance calculator for top-down view
+        if(len(results) >= 2):
+            TopDownCentroids = np.array([point for point in transformed_points_list])
+            TopDownD = dist.cdist(TopDownCentroids, TopDownCentroids, metric="euclidean")
+
+            # loop over the upper triangular of the distance matrix
+            for i in range(0, TopDownD.shape[0]):
+                for j in range(i+1, TopDownD.shape[1]):
+                    # check to see if the distance between any two centroid pairs is less
+                    # than the configured number of pixels
+                    if TopDownD[i, j] < config.MIN_DISTANCE:
+                        # update the violation set with the indexes of the centroid pairs
+                        TopDownViolate.add(i)
+                        TopDownViolate.add(j)
+
         for point in transformed_points_list:
             x,y = point
-            BIG_CIRCLE = 40  
+            BIG_CIRCLE = 20  
             SMALL_CIRCLE = 3
             COLOR = (0, 255, 0)
-            if transformed_points_list.index(point) in violate:
+            if transformed_points_list.index(point) in TopDownViolate:
                 COLOR = (0,0,255)
             cv2.circle(result, (int(x),int(y)), BIG_CIRCLE, COLOR, 2)
             cv2.circle(result, (int(x),int(y)), SMALL_CIRCLE, COLOR, -1)
-            
+
         cv2.imshow("Bird Eye View", result)
     
-
+    #------------------------------Alert function----------------------------------#
+    #------------------------------Alert function----------------------------------#
+    #------------------------------Alert function----------------------------------#
+    #------------------------------Alert function----------------------------------#
     #------------------------------Alert function----------------------------------#
     if len(violate) >= config.Threshold:
         if (t.is_alive() == True):
@@ -306,9 +316,6 @@ while True:
             
 
         previousFrameViolation = format(len(violate))
-        # cv2.putText(frame, "-ALERT: Violations over limit-", (10, frame.shape[0] - 80),
-        #     cv2.FONT_HERSHEY_COMPLEX, 0.60, (0, 0, 255), 2)
-
     else:
         previousFrameViolation = 0
         
@@ -320,6 +327,7 @@ while True:
 
         # bind the callback function to window
         cv2.setMouseCallback("Output", CallBackFunc)
+        CallBackFunc
 
         # if the 'q' key is pressed, break from the loop
         if key == ord("q"):
@@ -373,7 +381,12 @@ while True:
         # print("[INFO] writing stream to output")
         writer.write(frame)
 
-    #Records Realtime Data
+    #-----------------------------------Records Realtime Data----------------------------------------------------------
+    #-----------------------------------Records Realtime Data----------------------------------------------------------
+    #-----------------------------------Records Realtime Data----------------------------------------------------------
+    #-----------------------------------Records Realtime Data----------------------------------------------------------
+    #-----------------------------------Records Realtime Data----------------------------------------------------------
+    #-----------------------------------Records Realtime Data----------------------------------------------------------
     with open('realtimeData.csv', 'a') as csv_file:
         csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
 
@@ -413,13 +426,13 @@ if config.ATTACH:
         averagePerson = averagePerson
         averageViolator = averageViolator
         averageViolation = averageViolation
-        
     recorded_plot()
     # Send recorded data through email
     Mailer().sendData(config.MAIL)
 
 #Clean up, Free memory
 cv2.destroyAllWindows
+quit()
 
     
     
