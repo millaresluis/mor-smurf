@@ -13,7 +13,7 @@ frameLimit = 3
 TOP_DOWN = True
 # email alert
 ALERT = True
-MAIL = 'email'
+MAIL = 'lulumopanot@gmail.com'
 # should NVIDIA CUDA GPU be used?
 USE_GPU = True
 # people counter
@@ -22,4 +22,4 @@ People_Counter = True
 MIN_DISTANCE = 80
 # analytics
 Human_Data = 0
-ATTACH = False
+ATTACH = True

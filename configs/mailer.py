@@ -2,6 +2,7 @@ import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
+import os
 
 class Mailer:
 
@@ -53,10 +54,13 @@ class Mailer:
         # Add body to email
         msg.attach(body_part)
 
-        with open('recordedData.csv','rb') as file:
-        # Attach the file with filename to the email
-            msg.attach(MIMEApplication(file.read(), Name='recordedData.csv'))
-
+        files = ['recordedData.csv', 'analytics/recordedChart.jpg']
+        for a_file in files:
+            attachment = open(a_file, 'rb')
+            file_name = os.path.basename(a_file)
+            msg.attach(MIMEApplication(attachment.read(), Name=file_name))
+            
+            
         self.server = smtplib.SMTP_SSL('smtp.gmail.com', self.PORT)
         self.server.login(self.EMAIL, self.PASS)
 
