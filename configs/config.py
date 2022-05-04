@@ -25,4 +25,4 @@ People_Counter = True
 MIN_DISTANCE = 200
 # analytics
 Human_Data = 0
-ATTACH = False
+ATTACH = True

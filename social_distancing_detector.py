@@ -1,11 +1,11 @@
 # imports
-from calendar import c
 from cv2 import log
 from configs import config
 from configs.detection import detect_people
 from configs.smsnotif import sms_email_notification
 from configs.mailer import Mailer
 from scipy.spatial import distance as dist 
+from analytics.recorded import recorded_plot
 import numpy as np
 import argparse
 import imutils
@@ -443,8 +443,7 @@ if config.ATTACH:
         averagePerson = averagePerson
         averageViolator = averageViolator
         averageViolation = averageViolation
-
-
+    recorded_plot()
     # Send recorded data through email
     Mailer().sendData(config.MAIL)
 

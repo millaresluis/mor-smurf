@@ -2,6 +2,7 @@ import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
+import os
 
 class Mailer:
 
@@ -23,15 +24,22 @@ class Mailer:
 
     # Email Alert
     def send(self, mail):
+        # Define the HTML document
+        html = open("configs/html-email/index.html")
+
         self.server = smtplib.SMTP_SSL('smtp.gmail.com', self.PORT)
         self.server.login(self.EMAIL, self.PASS)
-        # message to be sent
-        SUBJECT = 'ALERT!'
-        TEXT = f'Social distancing violations exceeded!'
-        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+
+        email_message = MIMEMultipart()
+        email_message['Subject'] = f'ALERT!'
+        html_email = MIMEText(html.read(), 'html')
+        # Attach the html doc defined earlier, as a MIMEText html content type to the MIME message
+        email_message.attach(html_email)
+        # Convert it as a string
+        email_string = email_message.as_string()
 
         # sending the mail
-        self.server.sendmail(self.EMAIL, mail, message)
+        self.server.sendmail(self.EMAIL, mail, email_string)
         self.server.quit()
 
     # Email Data
@@ -46,10 +54,13 @@ class Mailer:
         # Add body to email
         msg.attach(body_part)
 
-        with open('recordedData.csv','rb') as file:
-        # Attach the file with filename to the email
-            msg.attach(MIMEApplication(file.read(), Name='recordedData.csv'))
-
+        files = ['recordedData.csv', 'analytics/recordedChart.jpg']
+        for a_file in files:
+            attachment = open(a_file, 'rb')
+            file_name = os.path.basename(a_file)
+            msg.attach(MIMEApplication(attachment.read(), Name=file_name))
+            
+            
         self.server = smtplib.SMTP_SSL('smtp.gmail.com', self.PORT)
         self.server.login(self.EMAIL, self.PASS)
 
