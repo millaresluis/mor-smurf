@@ -15,6 +15,8 @@
    (exit = q)
    (pause = p)
    (adjust top down points = 1-4)
+   (change topdownview background = v)
+   (capture new frozen topdownview background = i)
 ```
 
 ## References
