@@ -47,6 +47,7 @@ TopRight_calibrate = False
 BottomLeft_calibrate = False
 BottomRight_calibrate = False
 Calibrate_checker = False
+FrameViewSelector = 1
 
 #mouse click callback for top down conversion
 def CallBackFunc(event, x, y, flags, param):
@@ -233,6 +234,7 @@ while True:
     #----------------------------------------------------------Bird eye-------------------------------------------------------------#
     # bird eye view sample 
     if (config.TOP_DOWN):
+        TopDownFreezeImage = cv2.imread('TopDown.jpg')
         #top left
         if (TopLeft_calibrate == True):
             cv2.circle (frame, list_points[0], 5, (0,255,0), -1)
@@ -260,6 +262,7 @@ while True:
         pts2 = np.float32([[0,0], [width,0], [0,height], [width,height]])
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
         blank_image = np.zeros((height,width,3), np.uint8)
+        warpedImage = cv2.warpPerspective(birdeyeframe, matrix, (width, height))
         result = cv2.warpPerspective(birdeyeframe, matrix, (width, height))
         list_points_to_detect = np.float32(array_ground_points).reshape(-1, 1, 2)
         transformed_points = cv2.perspectiveTransform(list_points_to_detect, matrix)
@@ -291,10 +294,16 @@ while True:
             COLOR = (0, 255, 0)
             if transformed_points_list.index(point) in TopDownViolate:
                 COLOR = (0,0,255)
-            cv2.circle(result, (int(x),int(y)), BIG_CIRCLE, COLOR, 2)
-            cv2.circle(result, (int(x),int(y)), SMALL_CIRCLE, COLOR, -1)
+            switcher = {
+                1: warpedImage,
+                2: TopDownFreezeImage,
+                3: blank_image,
+            }
+            selectedview = switcher.get(FrameViewSelector, warpedImage)
+            cv2.circle(selectedview, (int(x),int(y)), BIG_CIRCLE, COLOR, 2)
+            cv2.circle(selectedview, (int(x),int(y)), SMALL_CIRCLE, COLOR, -1)
 
-        cv2.imshow("Bird Eye View", result)
+        cv2.imshow("Bird Eye View", selectedview)
     
     #------------------------------Alert function----------------------------------#
     #------------------------------Alert function----------------------------------#
@@ -364,6 +373,14 @@ while True:
             elif BottomRight_calibrate == True and Calibrate_checker == True:
                 BottomRight_calibrate = False
                 Calibrate_checker = False
+
+        if key == ord("i"):
+            cv2.imwrite("TopDown.jpg", warpedImage)
+        
+        if key == ord("v"):
+            FrameViewSelector += 1
+            if FrameViewSelector > 3:
+                FrameViewSelector = 1
 
         # if p is pressed, pause
         if key == ord('p'):
