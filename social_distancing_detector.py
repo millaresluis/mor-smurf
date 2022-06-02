@@ -19,6 +19,7 @@ import csv
 import pandas as pd
 from datetime import date
 from subprocess import Popen
+from urllib.request import urlopen
 Popen('python analytics/realtime.py')
 #analytics
 today = date.today()
@@ -27,6 +28,8 @@ x_value = 0
 totalViolations = 0
 realtimeFields = ["x_value", "config.Human_Data", "detectedViolators", "totalViolations" ]
 recordedFields = ["date", "averagePerson", "averageViolator", "averageViolation" ]
+
+esp32url = 'http://192.168.100.61/capture'
 
 with open('realtimeData.csv', 'w') as csv_file:
     csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
@@ -135,17 +138,25 @@ ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 # initialize the video stream and pointer to output video file
 print("[INFO] accessing video stream...")
 # open input video if available else webcam stream
+
+# old input condition
 vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
+
 writer = None
 previousFrameViolation = 0
 # loop over the frames from the video stream
 while True:    
     # num += 1
     # read the next frame from the input video
-    (grabbed, orig_frame) = vs.read()
-    # if the frame was not grabbed, then that's the end fo the stream 
-    if not grabbed:
-        break
+    if args["input"] == "":    
+        imgResp=urlopen("http://192.168.100.61/capture")
+        imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
+        esp32=cv2.imdecode(imgNp,-1)
+    else:
+        (grabbed, esp32) = vs.read()
+        # if the frame was not grabbed, then that's the end fo the stream
+        if not grabbed:
+            break
     
     if (stopFrameCheck == False):
         if (previousFrameViolation != 0):
@@ -158,8 +169,8 @@ while True:
         frameCounter = 0
  
     # resize the frame and then detect people (only people) in it
-    frame = imutils.resize(orig_frame, width=1200)
-    birdeyeframe= imutils.resize(orig_frame, width=1200)
+    frame = imutils.resize(esp32, width=1200)
+    birdeyeframe= imutils.resize(esp32, width=1200)
     results = detect_people(frame, net, ln, personIdx=LABELS.index("person"))
 
     # initialize the set of indexes that violate the minimum social distance
