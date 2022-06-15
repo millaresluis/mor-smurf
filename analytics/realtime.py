@@ -22,7 +22,7 @@ def animate(i):
 
     plt.plot(x, y1, label='Detected Person')
     plt.plot(x, y2, label='Violators')
-    plt.plot(x, y3, label='Violations')
+    plt.plot(x, y3, label='Violation Warnings')
     
 
     plt.legend(loc='upper left', prop={'size': 12})

@@ -13,7 +13,7 @@ import cv2
 import os
 import pyttsx3
 import threading
-import time
+from timeit import default_timer as timer
 import json
 import csv
 import pandas as pd
@@ -90,9 +90,7 @@ def CallBackFunc(event, x, y, flags, param):
             BottomRight_calibrate = False
             Calibrate_checker = False
 
-
 #text to speech converter
-stopFrameCheck = False
 def voice_alarm():
     engine = pyttsx3.init()
     # engine.stop()
@@ -143,13 +141,12 @@ print("[INFO] accessing video stream...")
 vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
 
 writer = None
-previousFrameViolation = 0
 # loop over the frames from the video stream
 while True:    
     # num += 1
     # read the next frame from the input video
     if args["input"] == "":    
-        imgResp=urlopen("http://192.168.100.61/capture")
+        imgResp=urlopen("http://192.168.0.190/capture")
         imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
         esp32=cv2.imdecode(imgNp,-1)
     else:
@@ -157,16 +154,6 @@ while True:
         # if the frame was not grabbed, then that's the end fo the stream
         if not grabbed:
             break
-    
-    if (stopFrameCheck == False):
-        if (previousFrameViolation != 0):
-            frameCounter += 1
-        
-        else:
-            frameCounter = 0
-    
-    else:
-        frameCounter = 0
  
     # resize the frame and then detect people (only people) in it
     frame = imutils.resize(esp32, width=1200)
@@ -198,7 +185,7 @@ while True:
                     # update the violation set with the indexes of the centroid pairs
                     violate.add(i)
                     violate.add(j)
-    
+
     # loop over the results
     for (i, (prob, bbox, centroid)) in enumerate(results):
         # extract teh bounding box and centroid coordinates, then initialize the color of the annotation
@@ -231,19 +218,11 @@ while True:
     cv2.putText(frame, text, (18, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
     #total no of violations
-    totalViolation = "Total Violation Warning: {}".format(totalViolations)
+    totalViolation = "Violation Voice Warning Total: {}".format(totalViolations)
     cv2.putText(frame, totalViolation, (18, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-
-    #frame counter
-    frameText = "Frame Counter: {}".format(frameCounter)
-    cv2.putText(frame, frameText, (350, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
     #----------------------------------------------------------Bird eye-------------------------------------------------------------#
-    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
-    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
-    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
-    #----------------------------------------------------------Bird eye-------------------------------------------------------------#
-    # bird eye view sample 
+    # bird eye view
     if (config.TOP_DOWN):
         TopDownFreezeImage = cv2.imread('TopDown.jpg')
         #top left
@@ -317,27 +296,21 @@ while True:
         cv2.imshow("Bird Eye View", selectedview)
     
     #------------------------------Alert function----------------------------------#
-    #------------------------------Alert function----------------------------------#
-    #------------------------------Alert function----------------------------------#
-    #------------------------------Alert function----------------------------------#
-    #------------------------------Alert function----------------------------------#
     if len(violate) >= config.Threshold:
         if (t.is_alive() == True):
-            stopFrameCheck = True
+            violationTimer = timer()
         else:
             t = threading.Thread(target=voice_alarm)
-            t2 = threading.Thread(target=sms_email_notification)
-            if config.ALERT:
-                if (frameCounter >= config.frameLimit):      
+            if config.SENDSMS:
+                t2 = threading.Thread(target=sms_email_notification)
+            if (round((timer() - violationTimer), 2) > config.TIMERTHRESHOLD):
+                if config.ALERT:
                     totalViolations += 1
                     t.start()     
-                    t2.start()
-            stopFrameCheck = False
-            
-
-        previousFrameViolation = format(len(violate))
+                    if config.SENDSMS:
+                        t2.start()
     else:
-        previousFrameViolation = 0
+        violationTimer = timer()
         
     # check to see if the output frame should be displayed to the screen
     if args["display"] > 0:
