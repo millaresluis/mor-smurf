@@ -9,7 +9,9 @@ from analytics.recorded import recorded_plot
 import numpy as np
 import argparse
 import imutils
+import fileinput
 import cv2
+from importlib import reload 
 import os
 import pyttsx3
 import threading
@@ -36,7 +38,7 @@ with open('realtimeData.csv', 'w') as csv_file:
     csv_writer.writeheader()
 
 # Initial list of points for top down view
-f = open('test-config.json','r')
+f = open('topdown-config.json','r')
 TopdownPointConfig = json.loads(f.read())
 list_points = list((
     TopdownPointConfig['TopLeft'],
@@ -51,6 +53,8 @@ BottomLeft_calibrate = False
 BottomRight_calibrate = False
 Calibrate_checker = False
 FrameViewSelector = 1
+distance_adder = 10
+minimum_violation_adder = 1
 
 #mouse click callback for top down conversion
 def CallBackFunc(event, x, y, flags, param):
@@ -60,7 +64,7 @@ def CallBackFunc(event, x, y, flags, param):
         if TopLeft_calibrate == True:
             list_points[0] = [x,y]
             TopdownPointConfig["TopLeft"] = [x,y]
-            f = open("test-config.json", "w")
+            f = open("topdown-config.json", "w")
             json.dump(TopdownPointConfig, f)
             f.close()
             TopLeft_calibrate = False
@@ -68,7 +72,7 @@ def CallBackFunc(event, x, y, flags, param):
         if TopRight_calibrate == True:
             list_points[1] = [x,y]
             TopdownPointConfig["TopRight"] = [x,y]
-            f = open("test-config.json", "w")
+            f = open("topdown-config.json", "w")
             json.dump(TopdownPointConfig, f)
             f.close()
             TopRight_calibrate = False
@@ -76,7 +80,7 @@ def CallBackFunc(event, x, y, flags, param):
         if BottomLeft_calibrate == True:
             list_points[2] = [x,y]
             TopdownPointConfig["BottomLeft"] = [x,y]
-            f = open("test-config.json", "w")
+            f = open("topdown-config.json", "w")
             json.dump(TopdownPointConfig, f)
             f.close()
             BottomLeft_calibrate = False
@@ -84,7 +88,7 @@ def CallBackFunc(event, x, y, flags, param):
         if BottomRight_calibrate == True:
             list_points[3] = [x,y]
             TopdownPointConfig["BottomRight"] = [x,y]
-            f = open("test-config.json", "w")
+            f = open("topdown-config.json", "w")
             json.dump(TopdownPointConfig, f)
             f.close()
             BottomRight_calibrate = False
@@ -314,8 +318,6 @@ while True:
         
     # check to see if the output frame should be displayed to the screen
     if args["display"] > 0:
-        # show the output frame
-        cv2.imshow("Output", frame)
         key = cv2.waitKey(1) & 0xFF
 
         # bind the callback function to window
@@ -368,7 +370,111 @@ while True:
 
         # if p is pressed, pause
         if key == ord('p'):
-            cv2.waitKey(-1) #wait until any key is pressed
+            default_color = (255, 255, 255)
+            highlighted_color = (0, 255, 0)
+            distance_color = default_color
+            violation_color = default_color
+            time_color = default_color
+            selector = 'none'
+            change_value = False
+            min_distance_value = config.MIN_DISTANCE
+            min_violation_value = config.Threshold
+            min_timerThreshold_value = config.TIMERTHRESHOLD
+            while True:
+                frameCopy = frame.copy()
+                key2 = cv2.waitKey(1) or 0xff
+                if key2 == ord("d"):
+                    if selector == 'none' or selector == 'd':
+                        if selector == 'd':
+                            selector = 'none'
+                            if min_distance_value != config.MIN_DISTANCE:
+                                with fileinput.FileInput('configs/config.py', inplace=True) as file:
+                                    for line in file:
+                                        print(line.replace("MIN_DISTANCE = " + str(config.MIN_DISTANCE), "MIN_DISTANCE = " + str(min_distance_value)), end='')
+                                config = reload(config)
+                        else:
+                            selector = 'd'
+                        change_value = not change_value
+                        distance_color = default_color
+                        if change_value:
+                            distance_color = highlighted_color
+                if key2 == ord("v"):
+                    if selector == 'none' or selector == 'v':
+                        if selector == 'v':
+                            selector = 'none'
+                            if min_violation_value != config.Threshold:
+                                with fileinput.FileInput('configs/config.py', inplace=True) as file:
+                                    for line in file:
+                                        print(line.replace("Threshold = " + str(config.Threshold), "Threshold = " + str(min_violation_value)), end='')
+                                config = reload(config)
+                        else:
+                            selector = 'v'
+                        change_value = not change_value
+                        violation_color = default_color
+                        if change_value:
+                            violation_color = highlighted_color
+                if key2 == ord("t"):
+                    if selector == 'none' or selector == 't':
+                        if selector == 't':
+                            selector = 'none'
+                            if min_timerThreshold_value != config.TIMERTHRESHOLD:
+                                with fileinput.FileInput('configs/config.py', inplace=True) as file:
+                                    for line in file:
+                                        print(line.replace("TIMERTHRESHOLD = " + str(config.TIMERTHRESHOLD), "TIMERTHRESHOLD = " + str(min_timerThreshold_value)), end='')
+                                config = reload(config)
+                        else:
+                            selector = 't'
+                        change_value = not change_value
+                        time_color = default_color
+                        if change_value:
+                            time_color = highlighted_color
+                if change_value and selector == 'd':
+                    if key2 == ord('\r'):
+                        min_distance_value += distance_adder
+                    if key2 == ord('\b'):
+                        min_distance_value -= distance_adder
+                    if key2 == ord('\t'):
+                        if distance_adder == 1:
+                            distance_adder = 10
+                        elif distance_adder == 10:
+                            distance_adder = 50
+                        elif distance_adder == 50:
+                            distance_adder = 100
+                        else:
+                            distance_adder = 1
+                    distance_adder_text = "+-{}".format(distance_adder)
+                    cv2.putText(frameCopy, distance_adder_text, (850, frame.shape[0] - 450), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
+                if change_value and selector == 'v':
+                    if key2 == ord('\r'):
+                        min_violation_value += minimum_violation_adder
+                    if key2 == ord('\b'):
+                        min_violation_value -= minimum_violation_adder
+                    if key2 == ord('\t'):
+                        if minimum_violation_adder == 1:
+                            minimum_violation_adder = 5
+                        else:
+                            minimum_violation_adder = 1
+                    minimum_violation_adder_text = "+-{}".format(minimum_violation_adder)
+                    cv2.putText(frameCopy, minimum_violation_adder_text, (850, frame.shape[0] - 425), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
+                if change_value and selector == 't':
+                    if key2 == ord('\r'):
+                        min_timerThreshold_value += 1
+                    if key2 == ord('\b'):
+                        min_timerThreshold_value -= 1
+                    min_timerThreshold_adder_text = "+-1"
+                    cv2.putText(frameCopy, min_timerThreshold_adder_text, (875, frame.shape[0] - 400), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
+                if key2 == ord('p') and change_value == False:
+                    break
+                min_distance = "D: Minimum Distance in pixels: {}".format(min_distance_value)
+                cv2.putText(frameCopy, min_distance, (425, frame.shape[0] - 450), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
+                alert_threshold = "V: Minimum Violations for voice alert: {}".format(min_violation_value)
+                cv2.putText(frameCopy, alert_threshold, (425, frame.shape[0] - 425), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
+                alert_timer_threshold = "T: Minimum Time (seconds) for voice alert: {}".format(min_timerThreshold_value)
+                cv2.putText(frameCopy, alert_timer_threshold, (425, frame.shape[0] - 400), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
+                cv2.imshow("Output", frameCopy)
+        
+        # show the output frame
+        cv2.imshow("Output", frame)
     
     # if an output video file path has been supplied and the video writer ahs not been 
     # initialized, do so now
