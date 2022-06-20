@@ -17,6 +17,14 @@
    (adjust top down points = 1-4)
    (change topdownview background = v)
    (capture new frozen topdownview background = i)
+
+   _on pause_
+   (d = change value distance(in pixels))
+   (v = change value of violations for voice alert)
+   (f = change value of time for voice alert(sec))
+   (enter = increase)
+   (backspace = decrease)
+   (tab = increase adder)
 ```
 
 ## References
