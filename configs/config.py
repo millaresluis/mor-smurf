@@ -10,12 +10,13 @@ MIN_CONF = 0.3
 NMS_THRESH = 0.3
 #Set the threshold value for total violations limit.
 Threshold = 15
-#no. of frames for violation
-frameLimit = 3
+#time counted before violation warning
+TIMERTHRESHOLD = 3
+SENDSMS = False
 #top down view
 TOP_DOWN = True
 # email alert
-ALERT = False
+ALERT = True
 MAIL = 'lulumopanot@gmail.com'
 # should NVIDIA CUDA GPU be used?
 USE_GPU = True
@@ -25,4 +26,4 @@ People_Counter = True
 MIN_DISTANCE = 200
 # analytics
 Human_Data = 0
-ATTACH = True
+ATTACH = False
