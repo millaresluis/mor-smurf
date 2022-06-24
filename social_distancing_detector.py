@@ -449,7 +449,7 @@ while True:
                         else:
                             distance_adder = 1
                     distance_adder_text = "+-{}".format(distance_adder)
-                    cv2.putText(frameCopy, distance_adder_text, (850, frame.shape[0] - 450), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
+                    cv2.putText(frameCopy, distance_adder_text, (1050, frame.shape[0] - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
                 if change_value and selector == 'v':
                     if key2 == ord('\r'):
                         min_violation_value += minimum_violation_adder
@@ -461,22 +461,22 @@ while True:
                         else:
                             minimum_violation_adder = 1
                     minimum_violation_adder_text = "+-{}".format(minimum_violation_adder)
-                    cv2.putText(frameCopy, minimum_violation_adder_text, (850, frame.shape[0] - 425), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
+                    cv2.putText(frameCopy, minimum_violation_adder_text, (1100, frame.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
                 if change_value and selector == 't':
                     if key2 == ord('\r'):
                         min_timerThreshold_value += 1
                     if key2 == ord('\b'):
                         min_timerThreshold_value -= 1
                     min_timerThreshold_adder_text = "+-1"
-                    cv2.putText(frameCopy, min_timerThreshold_adder_text, (875, frame.shape[0] - 400), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
+                    cv2.putText(frameCopy, min_timerThreshold_adder_text, (1150, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
                 if key2 == ord('p') and change_value == False:
                     break
                 min_distance = "D: Minimum Distance in pixels: {}".format(min_distance_value)
-                cv2.putText(frameCopy, min_distance, (425, frame.shape[0] - 450), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
+                cv2.putText(frameCopy, min_distance, (700, frame.shape[0] - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
                 alert_threshold = "V: Minimum Violations for voice alert: {}".format(min_violation_value)
-                cv2.putText(frameCopy, alert_threshold, (425, frame.shape[0] - 425), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
+                cv2.putText(frameCopy, alert_threshold, (700, frame.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
                 alert_timer_threshold = "T: Minimum Time (seconds) for voice alert: {}".format(min_timerThreshold_value)
-                cv2.putText(frameCopy, alert_timer_threshold, (425, frame.shape[0] - 400), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
+                cv2.putText(frameCopy, alert_timer_threshold, (700, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
                 cv2.imshow("Output", frameCopy)
         
         # show the output frame

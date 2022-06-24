@@ -55,7 +55,7 @@ def detect_people(frame, net, ln, personIdx=0):
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, MIN_CONF, NMS_THRESH)
     if People_Counter:
         human_count = "Human Counter: {}".format(len(idxs))
-        cv2.putText(frame, human_count, (550, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.putText(frame, human_count, (350, frame.shape[0] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
     config.Human_Data = format(len(idxs))
     # ensure at least one detection exists
