@@ -146,6 +146,7 @@ print("[INFO] accessing video stream...")
 vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
 
 writer = None
+writer2 = None
 # loop over the frames from the video stream
 while True:    
     # num += 1
@@ -165,8 +166,8 @@ while True:
     # esp32=cv2.imdecode(imgNp,-1)
  
     # resize the frame and then detect people (only people) in it
-    frame = imutils.resize(esp32, width=750)
-    birdeyeframe= imutils.resize(esp32, width=750)
+    frame = imutils.resize(esp32, width=900)
+    birdeyeframe= imutils.resize(esp32, width=900)
     results = detect_people(frame, net, ln, personIdx=LABELS.index("person"))
 
     # initialize the set of indexes that violate the minimum social distance
@@ -449,7 +450,7 @@ while True:
                         else:
                             distance_adder = 1
                     distance_adder_text = "+-{}".format(distance_adder)
-                    cv2.putText(frameCopy, distance_adder_text, (1050, frame.shape[0] - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
+                    cv2.putText(frameCopy, distance_adder_text, (475, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
                 if change_value and selector == 'v':
                     if key2 == ord('\r'):
                         min_violation_value += minimum_violation_adder
@@ -461,22 +462,22 @@ while True:
                         else:
                             minimum_violation_adder = 1
                     minimum_violation_adder_text = "+-{}".format(minimum_violation_adder)
-                    cv2.putText(frameCopy, minimum_violation_adder_text, (1100, frame.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
+                    cv2.putText(frameCopy, minimum_violation_adder_text, (475, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
                 if change_value and selector == 't':
                     if key2 == ord('\r'):
                         min_timerThreshold_value += 1
                     if key2 == ord('\b'):
                         min_timerThreshold_value -= 1
                     min_timerThreshold_adder_text = "+-1"
-                    cv2.putText(frameCopy, min_timerThreshold_adder_text, (1150, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
+                    cv2.putText(frameCopy, min_timerThreshold_adder_text, (475, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
                 if key2 == ord('p') and change_value == False:
                     break
                 min_distance = "D: Minimum Distance in pixels: {}".format(min_distance_value)
-                cv2.putText(frameCopy, min_distance, (700, frame.shape[0] - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
+                cv2.putText(frameCopy, min_distance, (18, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, distance_color, 2)
                 alert_threshold = "V: Minimum Violations for voice alert: {}".format(min_violation_value)
-                cv2.putText(frameCopy, alert_threshold, (700, frame.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
+                cv2.putText(frameCopy, alert_threshold, (18, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, violation_color, 2)
                 alert_timer_threshold = "T: Minimum Time (seconds) for voice alert: {}".format(min_timerThreshold_value)
-                cv2.putText(frameCopy, alert_timer_threshold, (700, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
+                cv2.putText(frameCopy, alert_timer_threshold, (18, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, time_color, 2)
                 cv2.imshow("Output", frameCopy)
         
         # show the output frame
@@ -484,15 +485,22 @@ while True:
     
     # if an output video file path has been supplied and the video writer ahs not been 
     # initialized, do so now
-    if args["output"] != "" and writer is None:
+    if writer is None:
         # initialize the video writer
         fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-        writer = cv2.VideoWriter(args["output"], fourcc, 25, (frame.shape[1], frame.shape[0]), True)
+        writer = cv2.VideoWriter('output.avi', fourcc, 25, (frame.shape[1], frame.shape[0]), True)
+    if writer2 is None:
+        fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+        writer2 = cv2.VideoWriter('output-td.avi', fourcc, 25, (350, 650), True)
 
     # if the video writer is not None, write the frame to the output video file
     if writer is not None:
         # print("[INFO] writing stream to output")
         writer.write(frame)
+
+    if writer2 is not None:
+        # print("[INFO] writing stream to output")
+        writer2.write(selectedview)
 
     #-----------------------------------Records Realtime Data----------------------------------------------------------
     #-----------------------------------Records Realtime Data----------------------------------------------------------
