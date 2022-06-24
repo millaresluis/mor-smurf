@@ -31,7 +31,8 @@ totalViolations = 0
 realtimeFields = ["x_value", "config.Human_Data", "detectedViolators", "totalViolations" ]
 recordedFields = ["date", "averagePerson", "averageViolator", "averageViolation" ]
 
-esp32url = 'http://192.168.100.61/capture'
+esp32url = 'http://192.168.100.70/saved-photo'
+# esp32url = 'http://192.168.100.61/capture'
 
 with open('realtimeData.csv', 'w') as csv_file:
     csv_writer = csv.DictWriter(csv_file, fieldnames=realtimeFields)
@@ -150,7 +151,7 @@ while True:
     # num += 1
     # read the next frame from the input video
     if args["input"] == "":    
-        imgResp=urlopen("http://192.168.0.190/capture")
+        imgResp=urlopen(esp32url)
         imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
         esp32=cv2.imdecode(imgNp,-1)
     else:
@@ -158,10 +159,14 @@ while True:
         # if the frame was not grabbed, then that's the end fo the stream
         if not grabbed:
             break
+    # (grabbed, esp32) = vs.read()
+    # imgResp=urlopen(esp32url)
+    # imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
+    # esp32=cv2.imdecode(imgNp,-1)
  
     # resize the frame and then detect people (only people) in it
-    frame = imutils.resize(esp32, width=1200)
-    birdeyeframe= imutils.resize(esp32, width=1200)
+    frame = imutils.resize(esp32, width=750)
+    birdeyeframe= imutils.resize(esp32, width=750)
     results = detect_people(frame, net, ln, personIdx=LABELS.index("person"))
 
     # initialize the set of indexes that violate the minimum social distance
@@ -281,6 +286,13 @@ while True:
                         TopDownViolate.add(i)
                         TopDownViolate.add(j)
 
+        switcher = {
+            1: warpedImage,
+            2: TopDownFreezeImage,
+            3: blank_image,
+        }
+        selectedview = switcher.get(FrameViewSelector, warpedImage)
+
         for point in transformed_points_list:
             x,y = point
             BIG_CIRCLE = 20  
@@ -288,12 +300,6 @@ while True:
             COLOR = (0, 255, 0)
             if transformed_points_list.index(point) in TopDownViolate:
                 COLOR = (0,0,255)
-            switcher = {
-                1: warpedImage,
-                2: TopDownFreezeImage,
-                3: blank_image,
-            }
-            selectedview = switcher.get(FrameViewSelector, warpedImage)
             cv2.circle(selectedview, (int(x),int(y)), BIG_CIRCLE, COLOR, 2)
             cv2.circle(selectedview, (int(x),int(y)), SMALL_CIRCLE, COLOR, -1)
 
