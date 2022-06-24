@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 output.avi
 yolo-coco/yolov3.weights
+yolo-coco/yolov4.weights
+realtimeData.csv
+output.avi
